@@ -726,5 +726,108 @@ class TestEquipment(unittest.TestCase):
         self.assertEqual(machine.elapsed_hold_seconds, 75.0)
         self.assertEqual(machine.remaining_hold_seconds(), 45.0)
 
+    def make_cooling_machine(self):
+        machine = Equipment(
+            "EQ-HT-001",
+            "Heat-Treatment Furnace",
+            "COOLING"
+        )
+
+        machine.operating_state = "RUNNING"
+        machine.actual_temperature_c = 100.0
+        machine.target_temperature_c = 80.0
+        machine.cooling_rate_c_per_min = 10.0
+
+        return machine
+
+    def test_cooling_reduces_temperature(self):
+        machine = self.make_cooling_machine()
+
+        machine.apply_cooling(60)
+
+        self.assertEqual(machine.actual_temperature_c, 90.0)
+
+    def test_cooling_stops_at_target(self):
+        machine = self.make_cooling_machine()
+
+        machine.apply_cooling(180)
+
+        self.assertEqual(machine.actual_temperature_c, 80.0)
+
+    def test_cooling_preserves_below_target(self):
+        machine = self.make_cooling_machine()
+        machine.actual_temperature_c = 75.0
+
+        machine.apply_cooling(60)
+
+        self.assertEqual(machine.actual_temperature_c, 75.0)
+
+    def test_idle_equipment_cannot_cool(self):
+        machine = self.make_cooling_machine()
+        machine.operating_state = "IDLE"
+
+        with self.assertRaises(ValueError):
+            machine.apply_cooling(60)
+
+        self.assertEqual(machine.actual_temperature_c, 100.0)
+
+    def test_wrong_phase_cannot_cool(self):
+        machine = self.make_cooling_machine()
+        machine.cycle_phase = "HOLDING"
+
+        with self.assertRaises(ValueError):
+            machine.apply_cooling(60)
+
+        self.assertEqual(machine.actual_temperature_c, 100.0)
+
+    def test_active_fault_blocks_cooling(self):
+        machine = self.make_cooling_machine()
+        machine.activate_fault("EQUIPMENT_MALFUNCTION")
+
+        with self.assertRaises(ValueError):
+            machine.apply_cooling(60)
+
+        self.assertEqual(machine.actual_temperature_c, 100.0)
+
+    def test_invalid_cooling_time_rejected(self):
+        for seconds in (0, -60):
+            with self.subTest(seconds=seconds):
+                machine = self.make_cooling_machine()
+
+                with self.assertRaises(ValueError):
+                    machine.apply_cooling(seconds)
+
+                self.assertEqual(machine.actual_temperature_c, 100.0)
+
+    def test_invalid_cooling_configuration(self):
+        configurations = (
+            ("actual_temperature_c", None),
+            ("target_temperature_c", None),
+            ("cooling_rate_c_per_min", None),
+            ("cooling_rate_c_per_min", 0.0),
+            ("cooling_rate_c_per_min", -10.0),
+        )
+
+        for attribute, value in configurations:
+            with self.subTest(attribute=attribute, value=value):
+                machine = self.make_cooling_machine()
+                setattr(machine, attribute, value)
+
+                with self.assertRaises(ValueError):
+                    machine.apply_cooling(60)
+
+                self.assertEqual(
+                    getattr(machine, attribute),
+                    value
+                )
+
+    def test_multiple_cooling_intervals(self):
+        machine = self.make_cooling_machine()
+
+        machine.apply_cooling(30)
+        machine.apply_cooling(30)
+
+        self.assertEqual(machine.actual_temperature_c, 90.0)
+
 if __name__ == "__main__":
     unittest.main()

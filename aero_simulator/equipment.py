@@ -40,6 +40,7 @@ class Equipment:
     actual_temperature_c: float | None = None
     target_temperature_c: float | None = None
     heating_rate_c_per_min: float | None = None
+    cooling_rate_c_per_min: float | None = None
     required_hold_seconds: float | None = None
     elapsed_hold_seconds: float = 0.0
     fault_history: list[dict] = field(default_factory=list)
@@ -177,3 +178,42 @@ class Equipment:
 
         self.data_timestamp = datetime.now(timezone.utc)
 
+    def apply_cooling(self, elapsed_seconds):
+        if self.operating_state != "RUNNING":
+            raise ValueError("Equipment must be RUNNING")
+
+        if self.cycle_phase != "COOLING":
+            raise ValueError("Equipment must be COOLING")
+
+        if self.fault_active:
+            raise ValueError("Cannot cool with an active fault")
+
+        if elapsed_seconds <= 0:
+            raise ValueError("Elapsed time must be positive")
+
+        if self.actual_temperature_c is None:
+            raise ValueError("Actual temperature is required")
+
+        if self.target_temperature_c is None:
+            raise ValueError("Cooling target is required")
+
+        if (
+            self.cooling_rate_c_per_min is None
+            or self.cooling_rate_c_per_min <= 0
+        ):
+            raise ValueError("Positive cooling rate required")
+
+        if self.actual_temperature_c <= self.target_temperature_c:
+            return
+
+        decrease = (
+            self.cooling_rate_c_per_min
+            * elapsed_seconds / 60
+        )
+
+        self.actual_temperature_c = max(
+            self.actual_temperature_c - decrease,
+            self.target_temperature_c
+        )
+
+        self.data_timestamp = datetime.now(timezone.utc)
