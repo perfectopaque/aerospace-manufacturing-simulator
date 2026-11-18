@@ -1,0 +1,15 @@
+# Python virtual environment
+.venv/
+
+# Python-generated files
+__pycache__/
+*.pyc
+
+# Local backups
+*.backup
+
+# Temporary development files
+simulator_candidate.py
+
+# Editor temporary files
+*~
