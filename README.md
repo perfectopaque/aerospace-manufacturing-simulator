@@ -1,4 +1,4 @@
-# Aerospace Manufacturing Simulator 🚀
+# Aerospace Manufacturing Simulator
 
 **Python | Manufacturing Automation | Cybersecurity | Automated Testing**
 
