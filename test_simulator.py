@@ -609,5 +609,122 @@ class TestEquipment(unittest.TestCase):
         self.assertEqual(machine.elapsed_hold_seconds, 30.0)
         self.assertEqual(machine.remaining_hold_seconds(), 90.0)
 
+    def test_idle_furnace_cannot_accumulate_holding_time(self):
+        machine = Equipment(
+            "EQ-HT-001",
+            "Heat-Treatment Furnace",
+            "HOLDING"
+        )
+
+        machine.actual_temperature_c = 100.0
+        machine.target_temperature_c = 100.0
+        machine.required_hold_seconds = 120.0
+
+        with self.assertRaises(ValueError):
+            machine.apply_holding(30)
+
+        self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def test_heating_phase_cannot_accumulate_holding_time(self):
+        machine = Equipment(
+            "EQ-HT-001",
+            "Heat-Treatment Furnace",
+            "HEATING"
+        )
+
+        machine.operating_state = "RUNNING"
+        machine.actual_temperature_c = 100.0
+        machine.target_temperature_c = 100.0
+        machine.required_hold_seconds = 120.0
+
+        with self.assertRaises(ValueError):
+            machine.apply_holding(30)
+
+        self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def make_holding_machine(self):
+        machine = Equipment(
+            "EQ-HT-001",
+            "Heat-Treatment Furnace",
+            "HOLDING"
+        )
+
+        machine.operating_state = "RUNNING"
+        machine.actual_temperature_c = 100.0
+        machine.target_temperature_c = 100.0
+        machine.required_hold_seconds = 120.0
+
+        return machine
+
+    def test_active_fault_blocks_holding(self):
+        machine = self.make_holding_machine()
+        machine.activate_fault("SENSOR_FAILURE")
+
+        with self.assertRaises(ValueError):
+            machine.apply_holding(30)
+
+        self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def test_invalid_holding_time_rejected(self):
+        for seconds in (0, -10):
+            with self.subTest(seconds=seconds):
+                machine = self.make_holding_machine()
+
+                with self.assertRaises(ValueError):
+                    machine.apply_holding(seconds)
+
+                self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def test_invalid_holding_duration_rejected(self):
+        for duration in (None, 0.0, -10.0):
+            with self.subTest(duration=duration):
+                machine = self.make_holding_machine()
+                machine.required_hold_seconds = duration
+
+                with self.assertRaises(ValueError):
+                    machine.apply_holding(30)
+
+                self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def test_missing_holding_temperature_rejected(self):
+        for attribute in (
+            "actual_temperature_c",
+            "target_temperature_c"
+        ):
+            with self.subTest(attribute=attribute):
+                machine = self.make_holding_machine()
+                setattr(machine, attribute, None)
+
+                with self.assertRaises(ValueError):
+                    machine.apply_holding(30)
+
+                self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def test_off_target_holding_rejected(self):
+        machine = self.make_holding_machine()
+        machine.actual_temperature_c = 95.0
+
+        with self.assertRaises(ValueError):
+            machine.apply_holding(30)
+
+        self.assertEqual(machine.elapsed_hold_seconds, 0.0)
+
+    def test_holding_time_capped_at_requirement(self):
+        machine = self.make_holding_machine()
+
+        machine.apply_holding(150)
+
+        self.assertEqual(machine.elapsed_hold_seconds, 120.0)
+        self.assertEqual(machine.remaining_hold_seconds(), 0.0)
+
+    def test_multiple_holding_intervals(self):
+        machine = self.make_holding_machine()
+
+        machine.apply_holding(30)
+        machine.apply_holding(45)
+
+        self.assertEqual(machine.elapsed_hold_seconds, 75.0)
+        self.assertEqual(machine.remaining_hold_seconds(), 45.0)
+
 if __name__ == "__main__":
     unittest.main()
