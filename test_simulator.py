@@ -1,8 +1,11 @@
+"""Regression tests for equipment state, faults, and thermal process logic."""
+
 import unittest
 from simulator import Equipment
 
 
 class TestEquipment(unittest.TestCase):
+    """Exercise equipment independence, transitions, and process safeguards."""
 
     def test_initial_state(self):
         machine = Equipment(
@@ -519,6 +522,7 @@ class TestEquipment(unittest.TestCase):
         self.assertEqual(machine.actual_temperature_c, 25.0)
 
     def test_heating_preserves_overtemperature(self):
+        """Leave already-high temperatures unchanged during heating."""
         machine = Equipment(
             "EQ-HT-001",
             "Heat-Treatment Furnace",
@@ -579,6 +583,7 @@ class TestEquipment(unittest.TestCase):
         self.assertIsNone(remaining)
 
     def test_remaining_hold_time_never_negative(self):
+        """Clamp negative remaining hold time to zero."""
         machine = Equipment(
             "EQ-HT-001",
             "Heat-Treatment Furnace",
@@ -643,6 +648,7 @@ class TestEquipment(unittest.TestCase):
         self.assertEqual(machine.elapsed_hold_seconds, 0.0)
 
     def make_holding_machine(self):
+        """Create a running, on-target furnace ready for holding tests."""
         machine = Equipment(
             "EQ-HT-001",
             "Heat-Treatment Furnace",
@@ -687,6 +693,7 @@ class TestEquipment(unittest.TestCase):
                 self.assertEqual(machine.elapsed_hold_seconds, 0.0)
 
     def test_missing_holding_temperature_rejected(self):
+        """Reject missing thermal readings before holding time accrues."""
         for attribute in (
             "actual_temperature_c",
             "target_temperature_c"
@@ -727,6 +734,7 @@ class TestEquipment(unittest.TestCase):
         self.assertEqual(machine.remaining_hold_seconds(), 45.0)
 
     def make_cooling_machine(self):
+        """Create a running furnace with a valid cooling configuration."""
         machine = Equipment(
             "EQ-HT-001",
             "Heat-Treatment Furnace",
@@ -755,6 +763,7 @@ class TestEquipment(unittest.TestCase):
         self.assertEqual(machine.actual_temperature_c, 80.0)
 
     def test_cooling_preserves_below_target(self):
+        """Do not warm an already cool furnace to the cooling setpoint."""
         machine = self.make_cooling_machine()
         machine.actual_temperature_c = 75.0
 
@@ -800,6 +809,7 @@ class TestEquipment(unittest.TestCase):
                 self.assertEqual(machine.actual_temperature_c, 100.0)
 
     def test_invalid_cooling_configuration(self):
+        """Reject missing or nonpositive cooling inputs."""
         configurations = (
             ("actual_temperature_c", None),
             ("target_temperature_c", None),

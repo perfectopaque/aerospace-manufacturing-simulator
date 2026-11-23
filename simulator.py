@@ -1,3 +1,9 @@
+"""Show initial states of the casting and heat-treatment equipment.
+
+This entry point creates representative machines but does not run an
+automated manufacturing cycle.
+"""
+
 from aero_simulator.equipment import Equipment, CASTING_PHASES, HEAT_TREATMENT_PHASES, next_phase
 
 casting = Equipment(
