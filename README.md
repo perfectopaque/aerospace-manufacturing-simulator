@@ -1,5 +1,7 @@
 # Aerospace Manufacturing Simulator
 
+[![Python Tests](https://github.com/perfectopaque/aerospace-manufacturing-simulator/actions/workflows/python-tests.yml/badge.svg)](https://github.com/perfectopaque/aerospace-manufacturing-simulator/actions/workflows/python-tests.yml)
+
 **Python | Manufacturing Automation | Cybersecurity | Automated Testing**
 
 ## About This Project
