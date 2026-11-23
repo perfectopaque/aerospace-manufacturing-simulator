@@ -131,6 +131,29 @@ The current program displays basic equipment information. A continuously running
 
 `python -m unittest -v test_simulator.py`
 
+## Running the Simulator Demonstration
+
+The repository includes `demo_simulator.py`, a reproducible demonstration of the existing manufacturing equipment models.
+
+After activating your Python virtual environment, run:
+
+```bash
+python demo_simulator.py
+```
+
+The demonstration shows:
+
+- Investment casting phase transitions and equipment operating-state validation.
+- Fault activation, UTC-stamped fault history, and blocked operations during active faults.
+- Heat-treatment furnace heating, holding, and cooling calculations.
+- Rejection of invalid operations to demonstrate equipment safeguards.
+
+The demonstration uses fictional, illustrative temperatures and process durations. These values are not validated aerospace manufacturing specifications.
+
+The script runs locally without OPC UA, Ignition SCADA, databases, Wazuh, or physical manufacturing equipment.
+
+`simulator.py` displays initial equipment states, while `demo_simulator.py` demonstrates additional implemented behavior.
+
 ## Development Progress
 
 ### Completed
