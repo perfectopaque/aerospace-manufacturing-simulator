@@ -154,6 +154,10 @@ The script runs locally without OPC UA, Ignition SCADA, databases, Wazuh, or phy
 
 `simulator.py` displays initial equipment states, while `demo_simulator.py` demonstrates additional implemented behavior.
 
+### Demonstration Output
+
+![Terminal demonstration showing investment casting, equipment fault handling, and heat-treatment operations](docs/images/simulator-demo.png)
+
 ## Development Progress
 
 ### Completed
