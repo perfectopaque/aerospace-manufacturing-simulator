@@ -13,3 +13,10 @@ simulator_candidate.py
 
 # Editor temporary files
 *~
+
+# Local environment files and secrets
+.env
+.env.*
+
+# Allow safe example configuration files
+!.env.example
