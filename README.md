@@ -2,29 +2,29 @@
 
 [![Python Tests](https://github.com/perfectopaque/aerospace-manufacturing-simulator/actions/workflows/python-tests.yml/badge.svg)](https://github.com/perfectopaque/aerospace-manufacturing-simulator/actions/workflows/python-tests.yml)
 
-**Python | Manufacturing Automation | Cybersecurity | Automated Testing**
+Python | Manufacturing Automation | Cybersecurity | Automated Testing
 
 ## About This Project
 
-I'm building a Python-based simulator that models equipment used in an aerospace manufacturing facility.
+I'm building a Python simulator to explore how manufacturing equipment operates, how software can monitor it, and how cybersecurity fits into an industrial environment.
 
-The project focuses on manufacturing a fictional product called a **Rocket Turbopump Housing**, a component used in rocket propulsion systems.
+This project simulates an aerospace manufacturing facility that produces rocket turbopump housings, which are real components used in rocket propulsion systems.
 
-My goal is to explore how manufacturing equipment, industrial software, and cybersecurity work together.
+The manufacturing facility and its operations are fictional, but the project is based on actual manufacturing concepts and processes.
 
-The simulator currently models investment casting and heat-treatment equipment. As the project grows, I plan to connect it to industrial monitoring software, production databases, and security tools.
+I've also started connecting my Python simulator to industrial communication technology. My first working connection uses OPC UA, a communication standard that allows industrial software and equipment to exchange information.
 
-This is a hands-on learning project that brings together my background in precision manufacturing, quality assurance, and cybersecurity.
+I built a Python server that shares live information from the simulated heat-treatment furnace, including its temperature and operating status. My next goal is to connect it to an Ignition SCADA system so I can display the furnace information on an industrial dashboard.
+
+This project brings together my experience in precision manufacturing, quality assurance, and cybersecurity while giving me a great opportunity to develop my Python skills.
 
 ## What the Simulator Does
 
-The simulator currently models two pieces of manufacturing equipment.
+The project currently includes two types of manufacturing equipment.
 
 ### Investment Casting Equipment (EQ-CAST-001)
 
-Investment casting is a manufacturing process used to create metal parts.
-
-The simulator follows five basic stages:
+Investment casting is a real manufacturing process used to make metal components. My simulator follows five stages of a casting process:
 
 1. Mold Ready
 2. Melt Ready
@@ -32,181 +32,203 @@ The simulator follows five basic stages:
 4. Solidifying
 5. Complete
 
-The equipment model tracks operating states, manufacturing phases, and simulated equipment faults.
+The program tracks which part of the casting process the equipment is in. It also checks whether certain actions are allowed and can record simulated equipment faults.
 
 ### Heat-Treatment Furnace (EQ-HT-001)
 
-Heat treatment uses controlled temperatures to change the properties of metal.
+Heat treatment uses controlled temperatures to change the properties of metal. My furnace simulator can:
 
-The furnace simulator models three main operations:
+- Heat toward a target temperature.
+- Hold at that temperature while tracking the time.
+- Cool toward a lower target temperature.
 
-- **Heating:** Increases temperature at a configured rate.
-- **Holding:** Tracks how long the furnace remains at its target temperature.
-- **Cooling:** Decreases temperature at a configured rate.
+I choose the temperatures, heating rates, and time settings to demonstrate how the program works. They are demonstration values, not actual manufacturing specifications or approved aerospace production settings.
 
-The simulator also checks for missing information, incorrect settings, and equipment faults.
+### Equipment Faults and Safeguards
 
-For now, the temperatures and heating rates are demonstration values rather than actual aerospace manufacturing specifications.
+I also want to understand what should happen when equipment doesn't behave as expected. My simulator can record faults, keep a history of when they happened, and block certain actions when the equipment isn't ready or the settings are incorrect.
 
-## Equipment Faults and Safety Checks
+These checks help me practice handling problems in software. They are not safety controls for real machinery.
 
-Manufacturing equipment does not always operate as expected.
+## See the Simulator in Action
 
-To explore these situations, I've added simulated equipment faults and operating safeguards.
+I created a demonstration that walks through the casting process, shows how equipment faults are handled, and demonstrates furnace heating, holding, and cooling.
 
-The simulator can:
+![Terminal demonstration of investment casting, equipment faults, and furnace operations](docs/images/simulator-demo.png)
 
-- Activate and identify equipment faults.
-- Record fault events with timestamps.
-- Prevent certain operations when equipment is not running.
-- Reject invalid temperatures, heating rates, and time values.
-- Preserve abnormal temperature readings instead of automatically correcting them.
+*The original Python demonstration can run on its own. Instructions for running it are below.*
 
-These features help me practice writing software that handles unexpected conditions.
+## Live Furnace Data with OPC UA
 
-## Automated Testing
+My OPC UA server shares changing information from the simulated furnace while it moves through its heating, holding, and cooling cycle.
 
-The project currently has **61 passing automated tests** using Python's built-in `unittest` framework.
+I tested the connection using a separate Python program to make sure the furnace information was being shared correctly. I could see the temperature changing and check which part of the process the furnace was in.
 
-The tests check equipment behavior, manufacturing phases, temperature calculations, fault handling, and invalid inputs.
+### Live Furnace Monitoring
 
-Automated testing helps me catch mistakes when I add new features or change existing code.
+![A second Python program reading changing furnace temperatures, operating status, and process information through OPC UA](docs/images/OPC_UA_Furnace_Live_Data_V1.png)
 
-## Tools and Technologies
+*These readings show the two Python programs sharing live information. The heartbeat counter increases periodically to show that the server is still updating.*
 
-| Technology | How I'm Using It |
+### Understanding the Furnace Connection
+
+1. **The furnace simulator runs on my Ubuntu computer.** Other computers cannot connect to it over the network right now. I've intentionally kept everything local while I continue developing and testing the system.
+
+2. **The program shares 15 pieces of furnace information.** These include its temperature, whether it's running, what part of the heating process it's performing, and whether an equipment fault has occurred.
+
+3. **Sometimes information isn't available.** When the simulator doesn't have a particular value, it can mark that information as missing instead of making something up. I'm continuing to test how other programs handle missing information.
+
+4. **Equipment faults and alarms are currently separate.** The simulator can record that something went wrong without automatically activating an alarm. This is how the program works at this stage, and it's something I may improve later.
+
+### Checking That the Connection Is Read-Only
+
+I tested what happens if another Python program tries to change the furnace's operating status through OPC UA. The server rejected the request, and the furnace's operating status stayed the same.
+
+![Python test showing that an attempted change to the furnace operating status was rejected](docs/images/OPC_UA_Furnace_Write_Rejected_V1.png)
+
+*The server refused the attempted change. This verifies the read-only behavior tested here, not encrypted communication or user authentication.*
+
+### Connection and Security
+
+The connection does not yet encrypt information or verify the identity of a connecting program. Before connecting it to other computers or industrial software, I plan to add those security protections.
+
+This version is intended only for local testing and should not be opened to external networks or used to control real equipment.
+
+## How I Test My Code
+
+The project has 73 automated tests. The original 61 tests check the equipment and manufacturing operations, and 12 newer tests check the OPC UA functions and setup.
+
+These tests help me find mistakes and make sure a new change hasn't broken something that worked before. GitHub Actions runs the full set on Python 3.12 and 3.14 whenever I push changes or open a pull request. The badge at the top of this page links to the test results.
+
+I also use CodeQL to look for possible security issues. Separately, I tested the live OPC UA connection and its read-only behavior using another Python program. Those hands-on checks are separate from the automated test suite.
+
+## Tools I'm Using and Learning
+
+| Tool | What I use it for |
 |---|---|
-| Python 3.12 | Equipment simulation |
-| unittest | Automated software testing |
-| Ubuntu 24.04 LTS | Development environment |
-| Git | Version control |
-| GitHub | Project documentation and code hosting |
+| Python | Writing the equipment simulator and demonstration programs |
+| Ubuntu 26.04 LTS | Running my development environment |
+| Nano | Writing and editing Python code |
+| unittest | Automatically testing my code |
+| asyncua | Sharing simulated furnace information through OPC UA |
+| Git | Tracking changes to my project |
+| GitHub Actions | Running automated tests on Python 3.12 and 3.14 |
+| CodeQL | Checking for possible security issues |
 
-### Planned Technologies
+My current Ubuntu setup uses Python 3.14.4 and asyncua 2.1.0. I'm exploring Ruff to help catch coding mistakes, and I'm beginning to learn Visual Studio Code (VS Code) as another way to write and understand Python code.
 
-| Technology | Planned Purpose |
-|---|---|
-| OPC UA | Equipment data communication |
-| Ignition 8.3 SCADA | Industrial dashboards and monitoring |
-| Ignition Tag Historian | Historical process data |
-| Manufacturing Database | Production records and quality tracking |
-| Wazuh | Cybersecurity monitoring |
+## How to Run the Project
 
-These integrations are planned and are not part of the current working simulator.
+These instructions are for Ubuntu or another Linux system. You'll need Python and Git installed.
 
-## Project Files
+### 1. Download the project
 
-The project is organized into a few main files:
+```bash
+git clone https://github.com/perfectopaque/aerospace-manufacturing-simulator.git
+cd aerospace-manufacturing-simulator
+```
 
-- `simulator.py`: Starts the simulator and displays equipment information.
-- `aero_simulator/equipment.py`: Contains equipment models, operating rules, and simulation functions.
-- `test_simulator.py`: Contains automated tests.
-- `README.md`: Explains the project.
+### 2. Create and activate a Python environment
 
-## How to Run the Simulator
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-You'll need Python installed on your computer.
+### 3. Install the required Python package
 
-**1. Download the project**
+```bash
+python -m pip install -r requirements.txt
+```
 
-`git clone https://github.com/perfectopaque/aerospace-manufacturing-simulator.git`
+### 4. Choose what you'd like to run
 
-**2. Open the project folder**
+To see the equipment's starting information:
 
-`cd aerospace-manufacturing-simulator`
+```bash
+python simulator.py
+```
 
-**3. Create a Python virtual environment**
-
-`python3 -m venv .venv`
-
-**4. Activate the environment on Ubuntu or Linux**
-
-`source .venv/bin/activate`
-
-**5. Run the simulator**
-
-`python simulator.py`
-
-The current program displays basic equipment information. A continuously running manufacturing simulation is still in development.
-
-**6. Run the automated tests**
-
-`python -m unittest -v test_simulator.py`
-
-## Running the Simulator Demonstration
-
-The repository includes `demo_simulator.py`, a reproducible demonstration of the existing manufacturing equipment models.
-
-After activating your Python virtual environment, run:
+To see the original manufacturing demonstration:
 
 ```bash
 python demo_simulator.py
 ```
 
-The demonstration shows:
+To start the live OPC UA furnace server:
 
-- Investment casting phase transitions and equipment operating-state validation.
-- Fault activation, UTC-stamped fault history, and blocked operations during active faults.
-- Heat-treatment furnace heating, holding, and cooling calculations.
-- Rejection of invalid operations to demonstrate equipment safeguards.
+```bash
+python opcua_furnace_server.py
+```
 
-The demonstration uses fictional, illustrative temperatures and process durations. These values are not validated aerospace manufacturing specifications.
+The server keeps running until you press Ctrl+C in the terminal. A second OPC UA program on the same computer can read its information while it runs.
 
-The script runs locally without OPC UA, Ignition SCADA, databases, Wazuh, or physical manufacturing equipment.
+To run all the automated tests:
 
-`simulator.py` displays initial equipment states, while `demo_simulator.py` demonstrates additional implemented behavior.
+```bash
+python -m unittest discover -v
+```
 
-### Demonstration Output
+## Main Project Files
 
-![Terminal demonstration showing investment casting, equipment fault handling, and heat-treatment operations](docs/images/simulator-demo.png)
+| File | What it does |
+|---|---|
+| aero_simulator/equipment.py | Contains equipment behavior, manufacturing stages, and fault handling |
+| simulator.py | Shows the starting equipment information |
+| demo_simulator.py | Demonstrates casting, furnace operations, and faults |
+| opcua_furnace_server.py | Runs the local furnace and shares information through OPC UA |
+| test_simulator.py | Tests the original equipment simulator |
+| test_opcua_furnace.py | Tests the new OPC UA functions |
+| requirements.txt | Lists the extra Python package needed |
+| .github/workflows/python-tests.yml | Sets up automated testing on GitHub |
+| docs/images/ | Contains the project screenshots |
 
 ## Development Progress
 
 ### Completed
 
-- [x] Create investment casting and heat-treatment equipment models
-- [x] Define manufacturing process phases
-- [x] Add equipment fault handling and fault history
-- [x] Simulate furnace heating
-- [x] Track furnace holding time
-- [x] Simulate furnace cooling
-- [x] Add automated tests
-- [x] Organize Python code into modules
-- [x] Publish the project on GitHub
+- [x] Built investment casting and heat-treatment equipment models.
+- [x] Added manufacturing stages, temperature calculations, equipment faults, and safeguards.
+- [x] Created a demonstration of the original equipment simulator.
+- [x] Built a working local OPC UA furnace server with changing readings.
+- [x] Confirmed that another Python program can read the data and cannot change the tested operating-status field.
+- [x] Added OPC UA automated tests and verified the test suite on two Python versions.
+- [x] Documented and published the Python project on GitHub.
 
 ### Coming Next
 
-- [ ] Build complete automated manufacturing cycles
-- [ ] Create repeatable equipment fault scenarios
-- [ ] Track manufacturing runs, casting lots, and heat-treatment batches
-- [ ] Add OPC UA communication
-- [ ] Connect equipment data to Ignition SCADA
-- [ ] Build industrial monitoring dashboards
-- [ ] Store production and quality records
-- [ ] Add controlled manufacturing approval steps
-- [ ] Integrate Wazuh security monitoring
-- [ ] Create end-to-end manufacturing demonstrations
+- [ ] Add stronger security before allowing connections over a network.
+- [ ] Connect the furnace to Ignition 8.3 SCADA and build a monitoring dashboard.
+- [ ] Share investment casting information through OPC UA.
+- [ ] Build more automated manufacturing cycles and fault scenarios.
+- [ ] Track simulated manufacturing runs, casting lots, and heat-treatment batches.
+- [ ] Add production and quality records, historical data, and approval steps.
+- [ ] Explore Wazuh for cybersecurity monitoring.
+- [ ] Bring these pieces together in a larger demonstration.
 
 ## Why This Project Matters to Me
 
-I have professional experience in precision manufacturing, quality assurance, cybersecurity risk assessment, and AI red-team evaluation.
+I've worked with manufacturing equipment and quality processes, and I've seen why reliable information and careful decision-making matter. Building this simulator lets me explore how software could support those same goals and how cybersecurity fits into the picture.
 
-I've worked with manufacturing equipment, investigated quality problems, and helped improve processes. My cybersecurity background has also taught me the importance of protecting systems and maintaining reliable information.
+I'm learning one step at a time, documenting my progress, and testing new features as I go.
 
-This project gives me an opportunity to connect those experiences while developing my Python and industrial automation skills.
+## Connection Details for Developers
 
-I'm especially interested in how manufacturing organizations can use technology to improve reliability, traceability, and security.
+For anyone who wants to try the local OPC UA connection, the server uses these settings:
 
-## Important Note
+```text
+Server address:  opc.tcp://127.0.0.1:4840/aerospace/
+Namespace:       urn:perfectopaque:aerospace-manufacturing-simulator:opcua
+Example data ID: Equipment/EQ-HT-001/ActualTemperature
+Security mode:   NoSecurity
+```
 
-This is a fictional manufacturing environment created for learning and demonstration purposes.
-
-It does not operate real industrial equipment or represent an approved aerospace manufacturing process.
+The Python source code shows how the furnace information is organized and shared. The server settings above are intended for local development only.
 
 ## Connect With Me
 
-**GitHub:** [perfectopaque](https://github.com/perfectopaque)
+GitHub: [perfectopaque](https://github.com/perfectopaque)
 
-**LinkedIn:** [Tracey Chaney](https://www.linkedin.com/in/tracey-chaney)
+LinkedIn: [Tracey Chaney](https://www.linkedin.com/in/tracey-chaney)
 
 *Thanks for checking out my project!*
